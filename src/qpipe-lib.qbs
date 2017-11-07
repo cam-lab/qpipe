@@ -17,11 +17,7 @@ Product {
     property string buildVariant: qbs.buildVariant
     property string lib_dir: FileInfo.path(sourceDirectory + "/../../../libs/")
 
-//    property bool slon: { console.info(lib_dir) }
-    
     destinationDirectory: FileInfo.joinPaths(lib_dir, buildVariant)
-
-//    property bool slonick: { console.info(destinationDirectory) }
 
     Depends { name: "cpp" }
     Depends { name: "Qt"; submodules: ["testlib"] }
