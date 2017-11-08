@@ -8,10 +8,13 @@ Product {
              "ip_qpipe.cpp",
              "ip_qpipe_lib.cpp",
              "ip_qpipe.h",
-             "qobject_p.h",
-             "qsharedmemory.h",
-             "qsharedmemory_p.h",
-             "shared_mem.h" ] 
+             //"qobject_p.h",
+             //"qsharedmemory.h",
+             //"qsharedmemory_p.h",
+             "shared_mem.h",
+             "../../../include/ip_qpipe_def.h",
+             "../../../include/ip_qpipe_lib.h",
+             "../../../include/tqueue.h" ] 
 
 
     property string buildVariant: qbs.buildVariant
