@@ -1,0 +1,43 @@
+#-------------------------------------------------------------------------------
+#
+#     qpipe test utilites build construction script
+#
+import os
+
+#-------------------------------------------------------------------------------
+#
+#     General
+#
+Import('env')
+
+env = env.Clone()
+Platform = env['PLATFORM']
+
+#-------------------------------------------------------------------------------
+#
+#     Setup sources and target
+#
+srcRx  = ['common/RawStreamTester.cpp', 'test_rx_pipe/main.cpp']
+srcTx  = ['common/RawStreamTester.cpp', 'test_tx_pipe/main.cpp']
+trgRx  = os.path.join(env['BINDIR'], env['PRODUCT_NAME'] + '_test_rx')
+trgTx  = os.path.join(env['BINDIR'], env['PRODUCT_NAME'] + '_test_tx')
+
+#-------------------------------------------------------------------------------
+#
+#     Setup local construction environment
+#
+env.EnableQt5Modules(['QtCore'])
+
+env.Append(LIBS=['ip_qpipe'])
+
+#-------------------------------------------------------------------------------
+#
+#     Build the targets
+#
+rx = env.Program( trgRx, srcRx ) 
+tx = env.Program( trgTx, srcTx ) 
+
+Return('rx tx')
+
+#-------------------------------------------------------------------------------
+
