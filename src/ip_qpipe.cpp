@@ -720,7 +720,7 @@ bool TPipeViewRx::dataBlockOff()
 //------------------------------------------------------------------------------
 bool TPipeViewRx::isRxSemSignalEna()
 {
-    return (!mControlBlockCache.txBufEmpty && (mRxSem.available() < static_cast<int>(mControlBlockCache.chunkNum)));
+    return (!mControlBlockCache.txBufEmpty && (mRxSem.available() < static_cast<int>(mControlBlockCache.chunkNum - 1)));
 }
 
 //------------------------------------------------------------------------------
