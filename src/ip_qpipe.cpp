@@ -13,6 +13,8 @@
 #include "ip_qpipe.h"
 
 
+static bool STOP_DEBUG = false;
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
@@ -250,6 +252,8 @@ void TPipeViewRxNotifier::run()
         //--- rx semaphore singaling
         if((txEvent == IP_QPIPE_LIB::TxTransfer) && mPipeViewRx.isRxSemSignalEna()) {
             mPipeViewRx.mRxSem.release();
+            if(!STOP_DEBUG)
+                qDebug() << "---------- I: [notifier] sem signal tx:" << mPipeViewRx.mControlBlockCache.txGblIdx << "rx:" << mPipeViewRx.mRxGblIdx << "sem:" << mPipeViewRx.mRxSem.available();
         }
     }
 }
@@ -747,6 +751,10 @@ void TPipeViewRx::syncRxGblIdx(uint32_t offset)
 {
     mControlBlockCache = getControlBlockView(); // not quarded
     mRxGblIdx = mControlBlockCache.txGblIdx - offset;
+
+    if(offset) {
+        qDebug() << "---------- I: [TPipeViewRx::syncRxGblIdx] tx:" << mControlBlockCache.txGblIdx << "rx:" << mRxGblIdx << "sem:" << mRxSem.available();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -868,6 +876,7 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     if(idxDelta == 0) {
         mLastError = IP_QPIPE_LIB::NoRxDataError;
         qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx;
+        STOP_DEBUG = true;
         return mLastError;
     }
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
@@ -876,14 +885,17 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     int32_t signalSemDelta = mRxSem.available() - idxNormDelta;
     if(signalSemDelta > 0) {
         mRxSem.acquire(signalSemDelta);
+        qDebug() << "correct RxSem signal number" << key() << signalSemDelta;
     }
 
     // 5. advance "local" (buf) rx idx
     uint32_t rxBufIdx = computeRxBufIdx(idxNormDelta);
 
     // 6. advance "global" rx idx
-    if(idxDelta >= mControlBlockCache.chunkNum)
+    if(idxDelta >= mControlBlockCache.chunkNum) {
+        qDebug() << "---------- I: [6. advance global rx idx] tx:" <<  mControlBlockCache.txGblIdx << "rx:" << mRxGblIdx << "sem:" << mRxSem.available();
         mRxGblIdx = mControlBlockCache.txGblIdx - mControlBlockCache.chunkNum + 1;
+    }
     ++mRxGblIdx;
 
     // 7. read data from chunk
