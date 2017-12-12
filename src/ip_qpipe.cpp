@@ -867,7 +867,7 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     uint32_t idxDelta = mControlBlockCache.txGblIdx - mRxGblIdx;
     if(idxDelta == 0) {
         mLastError = IP_QPIPE_LIB::NoRxDataError;
-        qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx;
+        qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx << "sem:" << mRxSem.available();
         return mLastError;
     }
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
