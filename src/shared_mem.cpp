@@ -16,7 +16,7 @@ bool TSharedMemory::lock(const QString& keyId)
     QSharedMemoryPrivate* d = d_func();
 
     if (d->lockedByMe) {
-        qDebug() << "W: QSharedMemory::lock: already locked, key:" << key();
+        //qDebug() << "W: QSharedMemory::lock: already locked, key:" << key();
         #if !defined(SHARED_MEM_THERAD_LOCK)
             return true;
         #endif
