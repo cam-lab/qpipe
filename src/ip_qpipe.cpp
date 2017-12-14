@@ -594,7 +594,8 @@ TPipeViewRx::TPipeViewRx(IP_QPIPE_LIB::TPipeRxParams& params) : TPipeView(params
                                                                 mNotifier(*this),
                                                                 mNotifyFunc(params.pipeRxNotifyFunc),
                                                                 mRxGblIdx(0),
-                                                                mRxSem(0)
+                                                                mRxSem(0),
+                                                                mDebugErr14(false)
 {
     mControlBlock.setKey(QString::number(params.pipeKey) + QString("_control"));
     //mDataBlock.setKey(QString::number(params.pipeKey) + QString("_data"));
@@ -867,9 +868,17 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     uint32_t idxDelta = mControlBlockCache.txGblIdx - mRxGblIdx;
     if(idxDelta == 0) {
         mLastError = IP_QPIPE_LIB::NoRxDataError;
-        qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx << "sem:" << mRxSem.available();
+        if(mDebugErr14 == false) {
+            mDebugErr14 = true;
+            qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx << "sem:" << mRxSem.available();
+        }
         return mLastError;
+    } else {
+        if(mDebugErr14 == true) {
+            mDebugErr14 = false;
+        }
     }
+
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
