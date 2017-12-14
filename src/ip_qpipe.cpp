@@ -230,7 +230,7 @@ void TPipeViewRxNotifier::run()
         //--- IP_QPIPE_LIB::TxTransfer
         if((txEvent == IP_QPIPE_LIB::TxTransfer) && !mPipeViewRx.mDataBlockData) {
             if(mPipeViewRx.dataBlockOn()) {
-                //mPipeViewRx.syncRxGblIdx(1);
+                mPipeViewRx.syncRxGblIdx(1);
                 mPipeViewRx.mRxSem.acquire(mPipeViewRx.mRxSem.available());
                 qDebug() << "W: [rx pipe] TxTransfer received; dataBlock ON; key:" << mPipeViewRx.key() << "id:" << mPipeViewRx.id();
             } else {
@@ -258,10 +258,6 @@ void TPipeViewRxNotifier::run()
         if(mPipeViewRx.mNotifyFunc) {
              mPipeViewRx.mControlBlockCache = mPipeViewRx.getControlBlockView(); // not quarded
             (*mPipeViewRx.mNotifyFunc)(mPipeViewRx.key(),txEvent,mPipeViewRx.id(),mPipeViewRx.mControlBlockCache);
-        }
-
-        if(!mPipeViewRx.isRxSemSignalEna()) {
-            qDebug() << "+++++++ key:" << mPipeViewRx.key() << "txGblIdx:" << mPipeViewRx.mControlBlockCache.txGblIdx << "rxGblIdx:" << mPipeViewRx.mRxGblIdx << "sem:" << mPipeViewRx.mRxSem.available();
         }
 
         //--- rx semaphore singaling
@@ -882,20 +878,11 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
 
     // 3. compute idxDelta & idxNormDelta ('normalized' to buf size)
     uint32_t idxDelta = mControlBlockCache.txGblIdx - mRxGblIdx;
-
-    //---
-    if(idxDelta >= mControlBlockCache.chunkNum) {
-        qDebug() << "--- large idxDelta:" << idxDelta << "key:" << key();
-    }
-    //---
-
-
     if(idxDelta == 0) {
         mLastError = IP_QPIPE_LIB::NoRxDataError;
         qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx << "sem:" << mRxSem.available();
         return mLastError;
     }
-
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
