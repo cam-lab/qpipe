@@ -189,21 +189,8 @@ void TPipeViewRxNotifier::setKeyPipeId(int rxId)
 //------------------------------------------------------------------------------
 void TPipeViewRxNotifier::run()
 {
-    unsigned startDelay = 1000;
-
     while(!mExit) {
-
-        if(startDelay == 0) {
-            mGblSem.acquire();
-        }
-        else {
-            if(--startDelay == 0) {
-                qDebug() << "rx pipe" << mPipeViewRx.key() << "started";
-            }
-            QThread::msleep(10);
-            continue;
-        }
-
+        mGblSem.acquire();
         if(mExit)
             return;
 
