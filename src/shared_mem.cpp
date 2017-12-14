@@ -4,7 +4,7 @@
 
 #include "shared_mem.h"
 
-//#define SHARED_MEM_THERAD_LOCK
+#define SHARED_MEM_THERAD_LOCK
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 bool TSharedMemory::lock(const QString& keyId)
