@@ -466,7 +466,23 @@ unsigned TPipeViewTx::notifyRx(const TPipeView::TControlBlock& controlBlock)
     for(auto k = 0; k < TPipeView::TControlBlock::MaxRxNum; ++k) {
         if(controlBlock.rxReady[k]) {
             ++num;
-            mSem[k]->release();
+
+            unsigned errNum = 0;
+            while(!mSem[k]->release() && (errNum < 3)) {
+                ++errNum;
+                QSystemSemaphore::SystemSemaphoreError semError = mSem[k]->error();
+                if(semError == QSystemSemaphore::OutOfResources) {
+                    mSem[k]->setKey(mSem[k]->key(), 0, QSystemSemaphore::Create);
+                    #if defined(Q_OS_WIN)
+                        qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "errNum:" << errNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #else
+                        qDebug() << "W: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "errNum:" << errNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #endif
+                } else {
+                    qDebug() << "E: [TPipeViewTx::notifyRx] key:" << mSem[k]->key() << "error:" << semError << "errNum:" << errNum;
+                    break;
+                }
+            }
         }
     }
     return num;
