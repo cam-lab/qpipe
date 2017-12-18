@@ -489,20 +489,29 @@ unsigned TPipeViewTx::notifyRx(const TPipeView::TControlBlock& controlBlock)
         if(controlBlock.rxReady[k]) {
             ++num;
 
-            unsigned errNum = 0;
-            while(!mSem[k]->release() && (errNum < 3)) {
-                ++errNum;
+            unsigned semRecoveryNum = 0;
+            while(!mSem[k]->release()) {
                 QSystemSemaphore::SystemSemaphoreError semError = mSem[k]->error();
                 if(semError == QSystemSemaphore::OutOfResources) {
+                    if(++semRecoveryNum > MaxRecoverySemNumber) {
+                        break;
+                    }
                     mSem[k]->setKey(mSem[k]->key(), 0, QSystemSemaphore::Create);
-                    #if defined(Q_OS_WIN)
-                        qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "errNum:" << errNum << "txGblIdx:" << controlBlock.txGblIdx;
-                    #else
-                        qDebug() << "W: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "errNum:" << errNum << "txGblIdx:" << controlBlock.txGblIdx;
-                    #endif
                 } else {
-                    qDebug() << "E: [TPipeViewTx::notifyRx] key:" << mSem[k]->key() << "error:" << semError << "errNum:" << errNum;
+                    qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore error, key:" << mSem[k]->key() << "error:" << semError << "txGblIdx:" << controlBlock.txGblIdx;
                     break;
+                }
+            }
+
+            if(semRecoveryNum) {
+                if(semRecoveryNum > MaxRecoverySemNumber) {
+                    qDebug() << "E: [FATAL ERROR] [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "txGblIdx:" << controlBlock.txGblIdx;
+                } else {
+                    #if defined(Q_OS_WIN)
+                        qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "recoveryNum:" << semRecoveryNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #else
+                        qDebug() << "W: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "recoveryNum:" << semRecoveryNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #endif
                 }
             }
         }

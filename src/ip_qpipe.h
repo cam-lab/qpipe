@@ -173,6 +173,8 @@ class TPipeViewTx : public TPipeView
         IP_QPIPE_LIB::TStatus sendData(IP_QPIPE_LIB::TPipeTxTransferFuncObj& txTransfer);
 
     protected:
+        static const unsigned MaxRecoverySemNumber = 5;
+
         unsigned notifyRx(const TPipeView::TControlBlock& controlBlock);
         bool activatePipe(IP_QPIPE_LIB::TPipeTxParams& params);
         bool activateDataBlock(IP_QPIPE_LIB::TPipeTxParams& params);
