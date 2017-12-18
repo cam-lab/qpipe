@@ -192,15 +192,23 @@ void TPipeViewRxNotifier::run()
     while(!mExit) {
 
         //---
-        unsigned errNum = 0;
+        QSystemSemaphore::SystemSemaphoreError semError = QSystemSemaphore::NoError;
+        unsigned recoveryTime = 0;
         while(!mGblSem.acquire() && !mExit) {
-            ++errNum;
-            QSystemSemaphore::SystemSemaphoreError semError = mGblSem.error();
-            qDebug() << "E: [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "error:" << semError << "errNum:" << errNum;
-            if(errNum > 20) {
+            semError = mGblSem.error();
+            recoveryTime += SystemSemRecoveryTimeStep;
+            if(recoveryTime > SystemSemRecoveryTime) {
                 mExit = true;
-            } else {
-                msleep(50);
+                continue;
+            }
+            msleep(SystemSemRecoveryTimeStep);
+        }
+        if(recoveryTime) {
+            if(recoveryTime > SystemSemRecoveryTime) {
+                qDebug() << "E: [FATAL ERROR] [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "QSystemSemaphore error:" << semError << "recoveryTime (ms)" << SystemSemRecoveryTime << "expired";
+            }
+            else {
+                qDebug() << "W: [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "QSystemSemaphore error:" << semError << "recoveryTime (ms):" << recoveryTime;
             }
         }
 

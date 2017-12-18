@@ -50,7 +50,9 @@ class TPipeViewRxNotifier : public QThread
         }
 
     protected:
-        static const unsigned WaitForFinish = 1000;
+        static const unsigned WaitForFinish             = 1000;
+        static const unsigned SystemSemRecoveryTime     = 1000;
+        static const unsigned SystemSemRecoveryTimeStep = 10;
 
         bool             mExit;
         QSystemSemaphore mGblSem;
