@@ -211,7 +211,6 @@ class TPipeViewRx : public TPipeView
         QSemaphore                        mRxSem;
         TQtMutexGuard                     mInstanceGuard;
         TQtMutexGuard                     mDataBlockGuard;
-        bool                              mDebugErr14;
 };
 
 //------------------------------------------------------------------------------
