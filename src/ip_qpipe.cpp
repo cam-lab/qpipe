@@ -190,17 +190,7 @@ void TPipeViewRxNotifier::setKeyPipeId(int rxId)
 void TPipeViewRxNotifier::run()
 {
     while(!mExit) {
-
-        //---
-        unsigned errNum = 0;
-        while(!mGblSem.acquire() && !mExit) {
-            qDebug() << "JOPANAH key:" << mPipeViewRx.key() << mGblSem.errorString() << "nErr:" << ++errNum;
-            if(errNum > 10) {
-                msleep(1);
-            }
-        }
-        //---
-
+        mGblSem.acquire();
         if(mExit)
             return;
 
