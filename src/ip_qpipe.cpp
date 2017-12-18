@@ -792,10 +792,12 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransfer& rxTra
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
-    int32_t signalSemDelta = mRxSem.available() - idxNormDelta;
-
+    int32_t signalSemDelta = (mRxSem.available() + 1)- idxNormDelta; // +1 - because mRxSem have been acquired but data not read else
     if(signalSemDelta > 0) {
         mRxSem.acquire(signalSemDelta);
+    }
+    if(signalSemDelta < 0) {
+        mRxSem.release(-signalSemDelta);
     }
 
     // 5. advance "local" (buf) rx idx
@@ -873,9 +875,12 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
-    int32_t signalSemDelta = mRxSem.available() - idxNormDelta;
+    int32_t signalSemDelta = (mRxSem.available() + 1)- idxNormDelta; // +1 - because mRxSem have been acquired but data not read else
     if(signalSemDelta > 0) {
         mRxSem.acquire(signalSemDelta);
+    }
+    if(signalSemDelta < 0) {
+        mRxSem.release(-signalSemDelta);
     }
 
     // 5. advance "local" (buf) rx idx
