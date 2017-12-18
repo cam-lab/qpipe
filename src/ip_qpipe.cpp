@@ -197,8 +197,10 @@ void TPipeViewRxNotifier::run()
             ++errNum;
             QSystemSemaphore::SystemSemaphoreError semError = mGblSem.error();
             qDebug() << "E: [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "error:" << semError << "errNum:" << errNum;
-            if(errNum > 3) {
+            if(errNum > 20) {
                 mExit = true;
+            } else {
+                msleep(50);
             }
         }
 
