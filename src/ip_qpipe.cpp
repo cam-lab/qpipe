@@ -190,7 +190,19 @@ void TPipeViewRxNotifier::setKeyPipeId(int rxId)
 void TPipeViewRxNotifier::run()
 {
     while(!mExit) {
-        mGblSem.acquire();
+
+        //---
+        unsigned errNum = 0;
+        while(!mGblSem.acquire() && !mExit) {
+            ++errNum;
+            QSystemSemaphore::SystemSemaphoreError semError = mGblSem.error();
+            qDebug() << "E: [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "error:" << semError << "errNum:" << errNum;
+            if(errNum > 3) {
+                mExit = true;
+            }
+        }
+
+        //---
         if(mExit)
             return;
 
