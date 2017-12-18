@@ -801,7 +801,7 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransfer& rxTra
     }
     #if defined(IP_QPIPE_PRINT_DEBUG_INFO)
         if(signalSemDelta) {
-            qDebug() << "W: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta << "key:" << key();
+            qDebug() << "W: [TPipeViewRx::readData (1)] signalSemDelta:" << signalSemDelta << "key:" << key();
         }
     #endif
 
