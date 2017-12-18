@@ -799,9 +799,9 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransfer& rxTra
     if(signalSemDelta < 0) {
         mRxSem.release(-signalSemDelta);
     }
-    #if defined(iIP_QPIPE_PRINT_DEBUG_INFO)
+    #if defined(IP_QPIPE_PRINT_DEBUG_INFO)
         if(signalSemDelta) {
-            qDebug() << "W: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta;
+            qDebug() << "W: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta << "key:" << key();
         }
     #endif
 
@@ -886,9 +886,9 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     if(signalSemDelta < 0) {
         mRxSem.release(-signalSemDelta);
     }
-    #if defined(iIP_QPIPE_PRINT_DEBUG_INFO)
+    #if defined(IP_QPIPE_PRINT_DEBUG_INFO)
         if(signalSemDelta) {
-            qDebug() << "W: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta;
+            qDebug() << "W: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta << "key:" << key();
         }
     #endif
 
