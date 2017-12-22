@@ -4,7 +4,7 @@
 
 #include "shared_mem.h"
 
-//#define SHARED_MEM_THERAD_LOCK
+#define SHARED_MEM_THERAD_LOCK
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 bool TSharedMemory::lock(const QString& keyId)
@@ -16,7 +16,7 @@ bool TSharedMemory::lock(const QString& keyId)
     QSharedMemoryPrivate* d = d_func();
 
     if (d->lockedByMe) {
-        qDebug() << "W: QSharedMemory::lock: already locked, key:" << key();
+        //qDebug() << "I: QSharedMemory::lock: already locked, key:" << key();
         #if !defined(SHARED_MEM_THERAD_LOCK)
             return true;
         #endif

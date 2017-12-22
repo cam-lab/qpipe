@@ -190,7 +190,29 @@ void TPipeViewRxNotifier::setKeyPipeId(int rxId)
 void TPipeViewRxNotifier::run()
 {
     while(!mExit) {
-        mGblSem.acquire();
+
+        //---
+        QSystemSemaphore::SystemSemaphoreError semError = QSystemSemaphore::NoError;
+        unsigned recoveryTime = 0;
+        while(!mGblSem.acquire() && !mExit) {
+            semError = mGblSem.error();
+            recoveryTime += SystemSemRecoveryTimeStep;
+            if(recoveryTime > SystemSemRecoveryTime) {
+                mExit = true;
+                continue;
+            }
+            msleep(SystemSemRecoveryTimeStep);
+        }
+        if(recoveryTime) {
+            if(recoveryTime > SystemSemRecoveryTime) {
+                qDebug() << "E: [FATAL ERROR] [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "QSystemSemaphore error:" << semError << "recoveryTime (ms)" << SystemSemRecoveryTime << "expired";
+            }
+            else {
+                qDebug() << "W: [TPipeViewRxNotifier::run] key:" << mPipeViewRx.key() << "QSystemSemaphore error:" << semError << "recoveryTime (ms):" << recoveryTime;
+            }
+        }
+
+        //---
         if(mExit)
             return;
 
@@ -466,7 +488,32 @@ unsigned TPipeViewTx::notifyRx(const TPipeView::TControlBlock& controlBlock)
     for(auto k = 0; k < TPipeView::TControlBlock::MaxRxNum; ++k) {
         if(controlBlock.rxReady[k]) {
             ++num;
-            mSem[k]->release();
+
+            unsigned semRecoveryNum = 0;
+            while(!mSem[k]->release()) {
+                QSystemSemaphore::SystemSemaphoreError semError = mSem[k]->error();
+                if(semError == QSystemSemaphore::OutOfResources) {
+                    if(++semRecoveryNum > MaxRecoverySemNumber) {
+                        break;
+                    }
+                    mSem[k]->setKey(mSem[k]->key(), 0, QSystemSemaphore::Create);
+                } else {
+                    qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore error, key:" << mSem[k]->key() << "error:" << semError << "txGblIdx:" << controlBlock.txGblIdx;
+                    break;
+                }
+            }
+
+            if(semRecoveryNum) {
+                if(semRecoveryNum > MaxRecoverySemNumber) {
+                    qDebug() << "E: [FATAL ERROR] [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "txGblIdx:" << controlBlock.txGblIdx;
+                } else {
+                    #if defined(Q_OS_WIN)
+                        qDebug() << "E: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "recoveryNum:" << semRecoveryNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #else
+                        qDebug() << "W: [TPipeViewTx::notifyRx] QSystemSemaphore::OutOfResources error, key:" << mSem[k]->key() << "recoveryNum:" << semRecoveryNum << "txGblIdx:" << controlBlock.txGblIdx;
+                    #endif
+                }
+            }
         }
     }
     return num;
@@ -792,11 +839,18 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransfer& rxTra
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
-    int32_t signalSemDelta = mRxSem.available() - idxNormDelta;
-
+    int32_t signalSemDelta = (mRxSem.available() + 1)- idxNormDelta; // +1 - because mRxSem have been acquired but data not read else
     if(signalSemDelta > 0) {
         mRxSem.acquire(signalSemDelta);
     }
+    if(signalSemDelta < 0) {
+        mRxSem.release(-signalSemDelta);
+    }
+    #if 0 //defined(IP_QPIPE_PRINT_DEBUG_INFO)
+        if(signalSemDelta) {
+            qDebug() << "I: [TPipeViewRx::readData (1)] signalSemDelta:" << signalSemDelta << "key:" << key();
+        }
+    #endif
 
     // 5. advance "local" (buf) rx idx
     uint32_t rxBufIdx = computeRxBufIdx(idxNormDelta);
@@ -867,16 +921,23 @@ IP_QPIPE_LIB::TStatus TPipeViewRx::readData(IP_QPIPE_LIB::TPipeRxTransferFuncObj
     uint32_t idxDelta = mControlBlockCache.txGblIdx - mRxGblIdx;
     if(idxDelta == 0) {
         mLastError = IP_QPIPE_LIB::NoRxDataError;
-        qDebug() << "[DEBUG] [NoRxDataError] pipeKey:" << key() << "txGblIdx:" << mControlBlockCache.txGblIdx << "rxGblIdx:" << mRxGblIdx;
         return mLastError;
     }
     uint32_t idxNormDelta = (idxDelta >= mControlBlockCache.chunkNum) ? (mControlBlockCache.chunkNum - 1) : idxDelta;
 
     // 4. correct RxSem signal number
-    int32_t signalSemDelta = mRxSem.available() - idxNormDelta;
+    int32_t signalSemDelta = (mRxSem.available() + 1)- idxNormDelta; // +1 - because mRxSem have been acquired but data not read else
     if(signalSemDelta > 0) {
         mRxSem.acquire(signalSemDelta);
     }
+    if(signalSemDelta < 0) {
+        mRxSem.release(-signalSemDelta);
+    }
+    #if 0 //defined(IP_QPIPE_PRINT_DEBUG_INFO)
+        if(signalSemDelta) {
+            qDebug() << "I: [TPipeViewRx::readData (2)] signalSemDelta:" << signalSemDelta << "key:" << key();
+        }
+    #endif
 
     // 5. advance "local" (buf) rx idx
     uint32_t rxBufIdx = computeRxBufIdx(idxNormDelta);
