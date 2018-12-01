@@ -1,7 +1,7 @@
 TEMPLATE    = lib
 TARGET      = ip_qpipe
 
-CONFIG     += staticlib
+#CONFIG     += staticlib
 
 PRJ_DIR      = ..
 
@@ -24,4 +24,9 @@ DEFINES += ENA_FW_QT
 
 win32 {
     DEFINES += ENA_WIN_API
+    contains(CONFIG,staticlib) {
+        message(staticlib build)
+    } else {
+        message(dynamiclib build)
+    }
 }
