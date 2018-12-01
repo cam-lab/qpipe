@@ -22,11 +22,12 @@ QT         += testlib
 
 DEFINES += ENA_FW_QT
 
+contains(CONFIG,staticlib) {
+    message(staticlib build)
+} else {
+    message(dynamiclib build)
+}
+
 win32 {
     DEFINES += ENA_WIN_API
-    contains(CONFIG,staticlib) {
-        message(staticlib build)
-    } else {
-        message(dynamiclib build)
-    }
 }
